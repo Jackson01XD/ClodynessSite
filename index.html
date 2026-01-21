@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Clodyness | Member Portal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
     <style>
         :root { --accent: #9d50bb; --bg: #050508; --sidebar: #0e0e14; --card: #16161c; --text: #ffffff; }
         body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
@@ -30,7 +29,7 @@
         <div class="auth-box">
             <h2 id="form-title">Login</h2>
             <input type="email" id="email" placeholder="Email">
-            <input type="password" id="password" placeholder="Password">
+            <input type="password" id="password" placeholder="Password (Min 6 chars)">
             <button onclick="runAuth()" id="action-btn">Login</button>
             <p id="toggle-link" style="color:var(--accent); cursor:pointer; font-size:14px; margin-top:20px;" onclick="swapMode()">New here? Sign Up</p>
         </div>
@@ -39,7 +38,7 @@
     <nav>
         <div class="logo">CLODYNESS</div>
         <div class="nav-item active" onclick="showView('overview', this)">Overview</div>
-        <div class="nav-item" onclick="showView('redeem', this)">Redeem Code</div>
+        <div class="nav-item" onclick="showView('redeem-view', this)">Redeem Code</div>
         <div style="margin-top: auto;">
             <p id="user-display" style="font-size:11px; color:#555;"></p>
             <div class="nav-item" onclick="logOut()" style="color:#ff4d4d;">Logout</div>
@@ -55,9 +54,9 @@
             </div>
         </div>
 
-        <div id="redeem" class="view">
+        <div id="redeem-view" class="view">
             <h1>Redeem</h1>
-            <input type="text" id="gift-code" placeholder="Enter Code">
+            <input type="text" id="gift-code" placeholder="Enter Code (e.g. Welcome)">
             <button onclick="redeem()">Apply</button>
         </div>
     </main>
@@ -65,8 +64,6 @@
     <script>
         const SB_URL = "https://okbotrgwafkgxehsspng.supabase.co";
         const SB_KEY = "sb_publishable_6SZuxGeBbnXLJxYsHhq_4g_hb06s6T5";
-        
-        // Safety: Create client immediately
         const clodyClient = window.supabase.createClient(SB_URL, SB_KEY);
 
         let currentMode = "login";
@@ -81,20 +78,42 @@
         async function runAuth() {
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value.trim();
-
-            if (!email || !password) return alert("Fill in your details!");
+            if (!email || !password) return alert("Fill in details!");
 
             const { data, error } = (currentMode === "login") 
                 ? await clodyClient.auth.signInWithPassword({ email, password })
                 : await clodyClient.auth.signUp({ email, password });
 
-            if (error) {
-                alert("Error: " + error.message);
-            } else if (currentMode === "signup" && data.user) {
-                alert("Account created! Logging you in...");
-                // Some Supabase setups need a second login call if auto-confirm is tricky
-                await clodyClient.auth.signInWithPassword({ email, password });
-            }
+            if (error) alert("Error: " + error.message);
+        }
+
+        // REDEEM FUNCTION - FIXED AND DEFINED
+        async function redeem() {
+            const codeInput = document.getElementById('gift-code').value.trim();
+            const { data: { user } } = await clodyClient.auth.getUser();
+
+            if (!user) return alert("Log in first!");
+
+            // Check gift_codes table
+            const { data: gift, error } = await clodyClient
+                .from('gift_codes')
+                .select('*')
+                .eq('code', codeInput)
+                .eq('is_used', false)
+                .single();
+
+            if (error || !gift) return alert("Invalid or used code!");
+
+            // Use the code
+            await clodyClient.from('gift_codes').update({ is_used: true }).eq('code', codeInput);
+
+            // Add coins to profile
+            const { data: profile } = await clodyClient.from('profiles').select('coins').eq('id', user.id).single();
+            const newTotal = (profile ? (profile.coins || 0) : 0) + gift.value;
+            
+            await clodyClient.from('profiles').update({ coins: newTotal }).eq('id', user.id);
+            document.getElementById('coin-display').innerText = newTotal;
+            alert(`Redeemed! +${gift.value} coins.`);
         }
 
         function showView(viewId, el) {
@@ -104,15 +123,11 @@
             el.classList.add('active');
         }
 
-        // The critical listener that handles the UI change
         clodyClient.auth.onAuthStateChange(async (event, session) => {
-            console.log("Auth Event:", event); // Check console for this!
             const overlay = document.getElementById('auth-overlay');
-            
             if (session) {
                 overlay.classList.add('hidden');
                 document.getElementById('user-display').innerText = session.user.email;
-                
                 const { data } = await clodyClient.from('profiles').select('coins').eq('id', session.user.id).single();
                 if (data) document.getElementById('coin-display').innerText = data.coins;
             } else {
