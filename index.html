@@ -2,66 +2,37 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clodyness | Dashboard</title>
+    <title>Clodyness | Alpha Portal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --accent: #9d50bb; --bg: #050508; --sidebar: #0e0e14; --card: #16161c; --text: #ffffff; }
-        body { background: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
-        #auth-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 100; display: flex; align-items: center; justify-content: center; }
-        .auth-box { background: var(--sidebar); padding: 40px; border-radius: 20px; width: 340px; border: 1px solid #333; text-align: center; }
-        nav { width: 260px; background: var(--sidebar); border-right: 1px solid #222; display: flex; flex-direction: column; padding: 20px; }
-        .logo { font-size: 24px; font-weight: 900; color: var(--accent); margin-bottom: 40px; }
-        .nav-item { padding: 12px 15px; margin: 5px 0; border-radius: 10px; cursor: pointer; color: #888; transition: 0.3s; }
-        .nav-item.active { background: #222; color: white; }
-        main { flex: 1; padding: 40px; overflow-y: auto; }
-        .view { display: none; }
-        .view.active { display: block; }
-        .stat-card { background: var(--card); padding: 25px; border-radius: 15px; border: 1px solid #222; }
-        input { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; outline: none; }
-        button { width: 100%; padding: 12px; background: var(--accent); border: none; color: white; font-weight: bold; border-radius: 8px; cursor: pointer; }
-        .hidden { display: none !important; }
+        :root { --accent: #9d50bb; --bg: #050508; --card: #111; --text: #fff; }
+        body { background: var(--bg); color: var(--text); font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .box { background: var(--card); padding: 40px; border-radius: 20px; width: 320px; text-align: center; border: 1px solid #333; }
+        input { width: 100%; padding: 12px; margin: 10px 0; box-sizing: border-box; background: #000; border: 1px solid #444; color: #fff; border-radius: 8px; }
+        button { width: 100%; padding: 12px; background: var(--accent); border: none; color: #fff; font-weight: bold; cursor: pointer; border-radius: 8px; margin-top: 10px; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
-    <div id="auth-overlay">
-        <div class="auth-box">
-            <h2 id="form-title">Login</h2>
-            <input type="email" id="email" placeholder="Email">
-            <input type="password" id="password" placeholder="Password (Min 6 chars)">
-            <button onclick="runAuth()" id="action-btn">Login</button>
-            <p id="toggle-link" style="color:var(--accent); cursor:pointer; font-size:14px; margin-top:20px;" onclick="swapMode()">New here? Sign Up</p>
-        </div>
+    <div id="auth-section" class="box">
+        <h2 id="form-title">Login</h2>
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Password (Min 6 chars)">
+        <button onclick="runAuth()" id="action-btn">Login</button>
+        <p onclick="swapMode()" style="color:var(--accent); cursor:pointer; font-size:14px; margin-top:20px;" id="toggle-link">New? Sign Up</p>
     </div>
 
-    <nav>
-        <div class="logo">CLODYNESS</div>
-        <div class="nav-item active" onclick="showView('overview', this)">Overview</div>
-        <div class="nav-item" onclick="showView('redeem-view', this)">Redeem Code</div>
-        <div style="margin-top: auto;">
-            <p id="user-display" style="font-size:11px; color:#555;"></p>
-            <div class="nav-item" onclick="logOut()" style="color:#ff4d4d;">Logout</div>
+    <div id="dash-section" class="box hidden">
+        <h2>Clodyness Alpha</h2>
+        <div style="background: #1a1a1a; padding: 20px; margin: 20px 0; border-radius: 12px; border: 1px solid #333;">
+            <small style="color: var(--accent);">COINS</small>
+            <div id="coin-display" style="font-size: 36px; font-weight: bold;">0</div>
         </div>
-    </nav>
-
-    <main>
-        <div id="overview" class="view active">
-            <h1>Dashboard</h1>
-            <div class="stat-card">
-                <small>CURRENT COINS</small>
-                <div id="coin-display" style="font-size:32px; font-weight:bold;">0</div>
-            </div>
-        </div>
-
-        <div id="redeem-view" class="view">
-            <h1>Redeem Code</h1>
-            <div class="stat-card" style="max-width: 400px;">
-                <input type="text" id="gift-code" placeholder="Enter Welcome Code">
-                <button type="button" id="redeem-btn" onclick="handleRedeem()">Redeem Now</button>
-            </div>
-        </div>
-    </main>
+        <input type="text" id="gift-code" placeholder="Enter 'Welcome'">
+        <button onclick="redeem()">Redeem Code</button>
+        <button onclick="clodyClient.auth.signOut()" style="background:#333; margin-top: 20px;">Logout</button>
+    </div>
 
     <script>
         const SB_URL = "https://okbotrgwafkgxehsspng.supabase.co";
@@ -74,32 +45,25 @@
             currentMode = (currentMode === "login") ? "signup" : "login";
             document.getElementById('form-title').innerText = (currentMode === "login") ? "Login" : "Sign Up";
             document.getElementById('action-btn').innerText = (currentMode === "login") ? "Login" : "Register Now";
-            document.getElementById('toggle-link').innerText = (currentMode === "login") ? "New here? Sign Up" : "Back to Login";
+            document.getElementById('toggle-link').innerText = (currentMode === "login") ? "New? Sign Up" : "Back to Login";
         }
 
         async function runAuth() {
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value.trim();
-            if (!email || !password) return alert("Missing fields!");
-
-            const { data, error } = (currentMode === "login") 
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const { error } = (currentMode === "login") 
                 ? await clodyClient.auth.signInWithPassword({ email, password })
                 : await clodyClient.auth.signUp({ email, password });
-
-            if (error) alert("Error: " + error.message);
+            if (error) alert(error.message);
         }
 
-        // REDEEM FUNCTION
-        async function handleRedeem() {
-            console.log("Redeem button clicked!"); // If this doesn't show, the function is broken
-            
+        async function redeem() {
             const codeInput = document.getElementById('gift-code').value.trim();
             const { data: { user } } = await clodyClient.auth.getUser();
 
-            if (!user) return alert("Please log in first.");
-            if (!codeInput) return alert("Enter a code!");
+            if (!user) return alert("Please log in!");
 
-            // 1. Search for code
+            // 1. Fetch code
             const { data: gift, error } = await clodyClient
                 .from('gift_codes')
                 .select('*')
@@ -107,48 +71,33 @@
                 .eq('is_used', false)
                 .single();
 
-            if (error || !gift) {
-                console.error("Database error or code not found:", error);
-                return alert("Invalid code or already used.");
-            }
+            if (error || !gift) return alert("Invalid or used code!");
 
-            // 2. Mark as used
+            // 2. Mark code as used
             await clodyClient.from('gift_codes').update({ is_used: true }).eq('code', codeInput);
 
-            // 3. Update Profile
+            // 3. Update User Coins
             const { data: profile } = await clodyClient.from('profiles').select('coins').eq('id', user.id).single();
             const newTotal = (profile ? (profile.coins || 0) : 0) + gift.value;
             
-            const { error: updateError } = await clodyClient.from('profiles').update({ coins: newTotal }).eq('id', user.id);
-            
-            if (updateError) {
-                alert("Profile update failed: " + updateError.message);
-            } else {
-                document.getElementById('coin-display').innerText = newTotal;
-                alert(`Success! You got ${gift.value} coins!`);
-            }
-        }
-
-        function showView(viewId, el) {
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-            document.getElementById(viewId).classList.add('active');
-            el.classList.add('active');
+            await clodyClient.from('profiles').update({ coins: newTotal }).eq('id', user.id);
+            document.getElementById('coin-display').innerText = newTotal;
+            alert("Redeemed " + gift.value + " coins!");
         }
 
         clodyClient.auth.onAuthStateChange(async (event, session) => {
-            const overlay = document.getElementById('auth-overlay');
+            const authDiv = document.getElementById('auth-section');
+            const dashDiv = document.getElementById('dash-section');
             if (session) {
-                overlay.classList.add('hidden');
-                document.getElementById('user-display').innerText = session.user.email;
+                authDiv.classList.add('hidden');
+                dashDiv.classList.remove('hidden');
                 const { data } = await clodyClient.from('profiles').select('coins').eq('id', session.user.id).single();
                 if (data) document.getElementById('coin-display').innerText = data.coins;
             } else {
-                overlay.classList.remove('hidden');
+                authDiv.classList.remove('hidden');
+                dashDiv.classList.add('hidden');
             }
         });
-
-        async function logOut() { await clodyClient.auth.signOut(); }
     </script>
 </body>
 </html>
