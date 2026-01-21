@@ -1,96 +1,158 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Clodyness | Member Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root { --accent: #9d50bb; --bg: #050508; --card: #0e0e14; --text: #ffffff; }
-        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
-        .container { background: var(--card); padding: 40px; border-radius: 20px; width: 350px; border: 1px solid #222; text-align: center; }
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .box { background: var(--card); padding: 40px; border-radius: 24px; width: 100%; max-width: 380px; border: 1px solid #222; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
         .hidden { display: none; }
-        input { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: var(--accent); border: none; color: white; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 10px; }
-        .balance-box { background: #161620; padding: 20px; border-radius: 12px; margin: 20px 0; border: 1px solid var(--accent); }
-        .coin-txt { font-size: 30px; font-weight: bold; display: block; }
+        h2 { font-weight: 900; letter-spacing: -1px; margin: 0; color: var(--accent); }
+        p { color: #666; font-size: 13px; margin-bottom: 25px; }
+        input { width: 100%; padding: 14px; margin-bottom: 12px; background: #000; border: 1px solid #333; border-radius: 12px; color: white; box-sizing: border-box; outline: none; transition: 0.2s; }
+        input:focus { border-color: var(--accent); }
+        button { width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 5px; }
+        button:hover { transform: translateY(-2px); filter: brightness(1.1); }
+        .stats-box { background: #161620; padding: 20px; border-radius: 16px; margin: 20px 0; border: 1px solid #2a2a3a; text-align: center; }
+        .coin-val { font-size: 36px; font-weight: 900; color: #fff; display: block; }
+        .toggle-link { color: #888; font-size: 12px; text-align: center; cursor: pointer; margin-top: 20px; text-decoration: underline; }
+        .logout { background: transparent; border: 1px solid #333; margin-top: 20px; color: #ff4444; }
     </style>
 </head>
 <body>
 
-    <div id="auth-ui" class="container">
-        <h2 id="title">Clodyness Account</h2>
-        <input type="email" id="email" placeholder="Email">
+    <div id="auth-ui" class="box">
+        <h2 id="main-title">Clodyness Login</h2>
+        <p id="main-desc">Enter your details to enter your dashboard.</p>
+        
+        <input type="email" id="email" placeholder="Email Address">
         <input type="password" id="password" placeholder="Password">
-        <button onclick="handleAuth()" id="btn-text">Login</button>
-        <p style="font-size: 12px; cursor: pointer; color: #888;" onclick="toggle()">Switch to Sign Up</p>
+        
+        <button id="submit-btn" onclick="handleAuth()">Enter Dashboard</button>
+        <div id="toggle-text" class="toggle-link" onclick="toggleMode()">New here? Create an account</div>
     </div>
 
-    <div id="dash-ui" class="container hidden">
+    <div id="dash-ui" class="box hidden">
         <h2>Dashboard</h2>
-        <p id="user-display" style="color: #666;"></p>
-        <div class="balance-box">
-            <small>YOUR BALANCE</small>
-            <span class="coin-txt" id="balance">0</span>
+        <p id="display-email">user@clodyness.com</p>
+
+        <div class="stats-box">
+            <small style="color: var(--accent); letter-spacing: 1px;">MY CLODCOINS</small>
+            <span class="coin-val" id="coin-count">0</span>
         </div>
-        <input type="text" id="code-input" placeholder="Enter Gift Code">
-        <button onclick="redeem()" style="background: #333;">Redeem Code</button>
-        <button onclick="logout()" style="background: transparent; border: 1px solid #444; margin-top: 20px;">Logout</button>
+
+        <div style="margin-top: 25px;">
+            <small style="font-weight: bold; color: #444;">REDEEM A GIFT CODE</small>
+            <input type="text" id="code-input" placeholder="XXXX-XXXX" style="margin-top: 8px;">
+            <button onclick="redeemCode()" style="background: #222;">Redeem Code</button>
+        </div>
+
+        <button class="logout" onclick="logout()">Sign Out</button>
     </div>
 
 <script>
-    const client = supabase.createClient("YOUR_URL", "YOUR_KEY");
+    // 1. SUPABASE CONFIG (REPLACE THESE!)
+    const SB_URL = "YOUR_SUPABASE_URL";
+    const SB_KEY = "YOUR_SUPABASE_ANON_KEY";
+    const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
+
     let isLogin = true;
 
-    function toggle() { 
-        isLogin = !isLogin; 
-        document.getElementById('title').innerText = isLogin ? "Clodyness Login" : "Sign Up";
-        document.getElementById('btn-text').innerText = isLogin ? "Login" : "Register";
+    // --- TOGGLE SYSTEM (FIXED) ---
+    function toggleMode() {
+        isLogin = !isLogin;
+        
+        const title = document.getElementById('main-title');
+        const desc = document.getElementById('main-desc');
+        const btn = document.getElementById('submit-btn');
+        const toggle = document.getElementById('toggle-text');
+
+        if (!isLogin) {
+            title.innerText = "Join Clodyness";
+            desc.innerText = "Create an account to start earning coins.";
+            btn.innerText = "Sign Up";
+            toggle.innerText = "Already have an account? Login";
+        } else {
+            title.innerText = "Clodyness Login";
+            desc.innerText = "Enter your details to enter your dashboard.";
+            btn.innerText = "Enter Dashboard";
+            toggle.innerText = "New here? Create an account";
+        }
     }
 
+    // --- AUTHENTICATION ---
     async function handleAuth() {
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
-        if (isLogin) await client.auth.signInWithPassword({ email, password });
-        else await client.auth.signUp({ email, password });
+
+        if (isLogin) {
+            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (error) alert(error.message);
+        } else {
+            const { error } = await supabaseClient.auth.signUp({ email, password });
+            if (error) alert(error.message);
+            else alert("Sign up successful! Check your email for the link.");
+        }
     }
 
-    client.auth.onAuthStateChange((event, session) => {
+    // --- UI AUTO-REFRESH ---
+    supabaseClient.auth.onAuthStateChange(async (event, session) => {
+        const authUI = document.getElementById('auth-ui');
+        const dashUI = document.getElementById('dash-ui');
+
         if (session) {
-            document.getElementById('auth-ui').classList.add('hidden');
-            document.getElementById('dash-ui').classList.remove('hidden');
-            document.getElementById('user-display').innerText = session.user.email;
-            fetchCoins(session.user.id);
+            authUI.classList.add('hidden');
+            dashUI.classList.remove('hidden');
+            document.getElementById('display-email').innerText = session.user.email;
+            fetchUserData(session.user.id);
         } else {
-            document.getElementById('auth-ui').classList.remove('hidden');
-            document.getElementById('dash-ui').classList.add('hidden');
+            authUI.classList.remove('hidden');
+            dashUI.classList.add('hidden');
         }
     });
 
-    async function fetchCoins(uid) {
-        const { data } = await client.from('profiles').select('coins').eq('id', uid).single();
-        if (data) document.getElementById('balance').innerText = data.coins;
+    async function fetchUserData(uid) {
+        const { data } = await supabaseClient.from('profiles').select('coins').eq('id', uid).single();
+        if (data) document.getElementById('coin-count').innerText = data.coins;
     }
 
-    async function redeem() {
-        const code = document.getElementById('code-input').value;
-        const { data: user } = await client.auth.getUser();
-        
-        // 1. Check code
-        const { data: gift } = await client.from('gift_codes').select('*').eq('code', code).eq('is_used', false).single();
-        if (!gift) return alert("Code invalid or used!");
+    // --- FIXED REDEEM SYSTEM ---
+    async function redeemCode() {
+        const input = document.getElementById('code-input').value.trim();
+        if (!input) return;
 
-        // 2. Mark code as used immediately
-        await client.from('gift_codes').update({ is_used: true }).eq('code', code);
+        // 1. Check if valid
+        const { data: gift, error } = await supabaseClient
+            .from('gift_codes')
+            .select('*')
+            .eq('code', input)
+            .eq('is_used', false)
+            .single();
 
-        // 3. Update user profile
-        const { data: prof } = await client.from('profiles').select('coins').eq('id', user.user.id).single();
-        const newTotal = prof.coins + gift.value;
-        await client.from('profiles').update({ coins: newTotal }).eq('id', user.user.id);
+        if (error || !gift) {
+            alert("Invalid or already used code!");
+            return;
+        }
+
+        // 2. Mark as used IMMEDIATELY
+        await supabaseClient.from('gift_codes').update({ is_used: true }).eq('code', input);
+
+        // 3. Add to user
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        const { data: profile } = await supabaseClient.from('profiles').select('coins').eq('id', user.id).single();
         
-        document.getElementById('balance').innerText = newTotal;
-        alert("Redeemed!");
+        const newBalance = (profile.coins || 0) + gift.value;
+        await supabaseClient.from('profiles').update({ coins: newBalance }).eq('id', user.id);
+
+        alert(`Redeemed ${gift.value} ClodCoins!`);
+        document.getElementById('coin-count').innerText = newBalance;
+        document.getElementById('code-input').value = "";
     }
 
-    async function logout() { await client.auth.signOut(); }
+    async function logout() { await supabaseClient.auth.signOut(); }
 </script>
 </body>
 </html>
