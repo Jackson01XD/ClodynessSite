@@ -5,154 +5,159 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Clodyness | Member Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <style>
-        :root { --accent: #9d50bb; --bg: #050508; --card: #0e0e14; --text: #ffffff; }
-        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-        .box { background: var(--card); padding: 40px; border-radius: 24px; width: 100%; max-width: 380px; border: 1px solid #222; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
-        .hidden { display: none; }
-        h2 { font-weight: 900; letter-spacing: -1px; margin: 0; color: var(--accent); }
-        p { color: #666; font-size: 13px; margin-bottom: 25px; }
-        input { width: 100%; padding: 14px; margin-bottom: 12px; background: #000; border: 1px solid #333; border-radius: 12px; color: white; box-sizing: border-box; outline: none; transition: 0.2s; }
+        :root { --accent: #9d50bb; --bg: #050508; --card: #111; --text: #fff; }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .box { background: var(--card); padding: 40px; border-radius: 20px; width: 340px; text-align: center; border: 1px solid #333; box-shadow: 0 15px 35px rgba(0,0,0,0.7); }
+        .hidden { display: none !important; }
+        input { width: 100%; padding: 12px; margin: 10px 0; box-sizing: border-box; background: #000; border: 1px solid #444; color: #fff; border-radius: 8px; outline: none; transition: 0.3s; }
         input:focus { border-color: var(--accent); }
-        button { width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 5px; }
-        button:hover { transform: translateY(-2px); filter: brightness(1.1); }
-        .stats-box { background: #161620; padding: 20px; border-radius: 16px; margin: 20px 0; border: 1px solid #2a2a3a; text-align: center; }
-        .coin-val { font-size: 36px; font-weight: 900; color: #fff; display: block; }
-        .toggle-link { color: #888; font-size: 12px; text-align: center; cursor: pointer; margin-top: 20px; text-decoration: underline; }
-        .logout { background: transparent; border: 1px solid #333; margin-top: 20px; color: #ff4444; }
+        button { width: 100%; padding: 12px; background: var(--accent); border: none; color: #fff; font-weight: bold; cursor: pointer; border-radius: 8px; margin-top: 10px; transition: 0.2s; }
+        button:hover { filter: brightness(1.2); transform: scale(0.98); }
+        .toggle-link { color: var(--accent); cursor: pointer; text-decoration: underline; display: block; margin-top: 20px; font-size: 14px; }
+        .balance-box { background: #1a1a1a; padding: 20px; margin: 20px 0; border-radius: 12px; border: 1px solid #333; }
+        #user-tag { color: #666; font-size: 12px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
-    <div id="auth-ui" class="box">
-        <h2 id="main-title">Clodyness Login</h2>
-        <p id="main-desc">Enter your details to enter your dashboard.</p>
+    <div id="auth-section" class="box">
+        <h2 id="form-title">Login</h2>
+        <p id="form-desc" style="color: #888; font-size: 13px;">Welcome to the Clodyness portal.</p>
         
         <input type="email" id="email" placeholder="Email Address">
         <input type="password" id="password" placeholder="Password">
         
-        <button id="submit-btn" onclick="handleAuth()">Enter Dashboard</button>
-        <div id="toggle-text" class="toggle-link" onclick="toggleMode()">New here? Create an account</div>
+        <button id="action-btn" onclick="runAuth()">Login</button>
+        
+        <span class="toggle-link" id="toggle-clickable" onclick="swapMode()">New here? Sign Up</span>
     </div>
 
-    <div id="dash-ui" class="box hidden">
+    <div id="dash-section" class="box hidden">
         <h2>Dashboard</h2>
-        <p id="display-email">user@clodyness.com</p>
-
-        <div class="stats-box">
-            <small style="color: var(--accent); letter-spacing: 1px;">MY CLODCOINS</small>
-            <span class="coin-val" id="coin-count">0</span>
+        <p id="user-tag">user@clodyness.com</p>
+        
+        <div class="balance-box">
+            <small style="color: var(--accent); letter-spacing: 1px;">TOTAL CLODCOINS</small>
+            <div id="coin-display" style="font-size: 40px; font-weight: 900;">0</div>
         </div>
 
-        <div style="margin-top: 25px;">
-            <small style="font-weight: bold; color: #444;">REDEEM A GIFT CODE</small>
-            <input type="text" id="code-input" placeholder="XXXX-XXXX" style="margin-top: 8px;">
-            <button onclick="redeemCode()" style="background: #222;">Redeem Code</button>
+        <div style="margin-top: 20px; text-align: left;">
+            <small style="font-weight: bold; color: #444;">REDEEM CODE</small>
+            <input type="text" id="gift-code" placeholder="XXXX-XXXX-XXXX">
+            <button onclick="redeem()">Redeem Reward</button>
         </div>
 
-        <button class="logout" onclick="logout()">Sign Out</button>
+        <button onclick="logOutUser()" style="background: transparent; border: 1px solid #333; margin-top: 30px; color: #ff4d4d;">Logout</button>
     </div>
 
-<script>
-    // 1. SUPABASE CONFIG (REPLACE THESE!)
-    const SB_URL = "YOUR_SUPABASE_URL";
-    const SB_KEY = "YOUR_SUPABASE_ANON_KEY";
-    const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
-
-    let isLogin = true;
-
-    // --- TOGGLE SYSTEM (FIXED) ---
-    function toggleMode() {
-        isLogin = !isLogin;
+    <script>
+        // --- CONFIGURATION ---
+        const SB_URL = "https://okbotrgwafkgxehsspng.supabase.co";
+        const SB_KEY = "sb_publishable_6SZuxGeBbnXLJxYsHhq_4g_hb06s6T5";
         
-        const title = document.getElementById('main-title');
-        const desc = document.getElementById('main-desc');
-        const btn = document.getElementById('submit-btn');
-        const toggle = document.getElementById('toggle-text');
+        // Initialize Client
+        const clodyClient = window.supabase.createClient(SB_URL, SB_KEY);
 
-        if (!isLogin) {
-            title.innerText = "Join Clodyness";
-            desc.innerText = "Create an account to start earning coins.";
-            btn.innerText = "Sign Up";
-            toggle.innerText = "Already have an account? Login";
-        } else {
-            title.innerText = "Clodyness Login";
-            desc.innerText = "Enter your details to enter your dashboard.";
-            btn.innerText = "Enter Dashboard";
-            toggle.innerText = "New here? Create an account";
-        }
-    }
+        let currentMode = "login";
 
-    // --- AUTHENTICATION ---
-    async function handleAuth() {
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
+        // --- MODE SWITCHER ---
+        function swapMode() {
+            const title = document.getElementById('form-title');
+            const desc = document.getElementById('form-desc');
+            const btn = document.getElementById('action-btn');
+            const link = document.getElementById('toggle-clickable');
 
-        if (isLogin) {
-            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-            if (error) alert(error.message);
-        } else {
-            const { error } = await supabaseClient.auth.signUp({ email, password });
-            if (error) alert(error.message);
-            else alert("Sign up successful! Check your email for the link.");
-        }
-    }
-
-    // --- UI AUTO-REFRESH ---
-    supabaseClient.auth.onAuthStateChange(async (event, session) => {
-        const authUI = document.getElementById('auth-ui');
-        const dashUI = document.getElementById('dash-ui');
-
-        if (session) {
-            authUI.classList.add('hidden');
-            dashUI.classList.remove('hidden');
-            document.getElementById('display-email').innerText = session.user.email;
-            fetchUserData(session.user.id);
-        } else {
-            authUI.classList.remove('hidden');
-            dashUI.classList.add('hidden');
-        }
-    });
-
-    async function fetchUserData(uid) {
-        const { data } = await supabaseClient.from('profiles').select('coins').eq('id', uid).single();
-        if (data) document.getElementById('coin-count').innerText = data.coins;
-    }
-
-    // --- FIXED REDEEM SYSTEM ---
-    async function redeemCode() {
-        const input = document.getElementById('code-input').value.trim();
-        if (!input) return;
-
-        // 1. Check if valid
-        const { data: gift, error } = await supabaseClient
-            .from('gift_codes')
-            .select('*')
-            .eq('code', input)
-            .eq('is_used', false)
-            .single();
-
-        if (error || !gift) {
-            alert("Invalid or already used code!");
-            return;
+            if (currentMode === "login") {
+                currentMode = "signup";
+                title.innerText = "Sign Up";
+                desc.innerText = "Create your account to start earning.";
+                btn.innerText = "Register Now";
+                link.innerText = "Already have an account? Login";
+            } else {
+                currentMode = "login";
+                title.innerText = "Login";
+                desc.innerText = "Welcome back to the Clodyness portal.";
+                btn.innerText = "Login";
+                link.innerText = "New here? Sign Up";
+            }
         }
 
-        // 2. Mark as used IMMEDIATELY
-        await supabaseClient.from('gift_codes').update({ is_used: true }).eq('code', input);
+        // --- AUTH ACTION ---
+        async function runAuth() {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
 
-        // 3. Add to user
-        const { data: { user } } = await supabaseClient.auth.getUser();
-        const { data: profile } = await supabaseClient.from('profiles').select('coins').eq('id', user.id).single();
-        
-        const newBalance = (profile.coins || 0) + gift.value;
-        await supabaseClient.from('profiles').update({ coins: newBalance }).eq('id', user.id);
+            if (!email || !pass) return alert("Please fill in all fields.");
 
-        alert(`Redeemed ${gift.value} ClodCoins!`);
-        document.getElementById('coin-count').innerText = newBalance;
-        document.getElementById('code-input').value = "";
-    }
+            if (currentMode === "login") {
+                const { error } = await clodyClient.auth.signInWithPassword({ email, password: pass });
+                if (error) alert("Login Failed: " + error.message);
+            } else {
+                const { error } = await clodyClient.auth.signUp({ email, password: pass });
+                if (error) {
+                    alert("Signup Failed: " + error.message);
+                    if(error.message.includes("disabled")) {
+                        alert("CRITICAL: Go to Supabase > Auth > Providers > Email and turn ON 'Allow new users to sign up'. Click SAVE at the bottom!");
+                    }
+                } else {
+                    alert("Success! If you didn't disable email confirmation, check your inbox.");
+                }
+            }
+        }
 
-    async function logout() { await supabaseClient.auth.signOut(); }
-</script>
+        // --- REDEEM SYSTEM ---
+        async function redeem() {
+            const codeInput = document.getElementById('gift-code').value.trim();
+            const { data: { user } } = await clodyClient.auth.getUser();
+
+            if (!codeInput) return;
+
+            // 1. Fetch code
+            const { data: gift, error } = await clodyClient
+                .from('gift_codes')
+                .select('*')
+                .eq('code', codeInput)
+                .eq('is_used', false)
+                .single();
+
+            if (error || !gift) return alert("Invalid or already used code!");
+
+            // 2. Mark as used
+            await clodyClient.from('gift_codes').update({ is_used: true }).eq('code', codeInput);
+
+            // 3. Update Coins
+            const { data: profile } = await clodyClient.from('profiles').select('coins').eq('id', user.id).single();
+            const newBalance = (profile.coins || 0) + gift.value;
+            
+            await clodyClient.from('profiles').update({ coins: newBalance }).eq('id', user.id);
+            
+            document.getElementById('coin-display').innerText = newBalance;
+            alert(`Success! ${gift.value} coins added.`);
+            document.getElementById('gift-code').value = "";
+        }
+
+        // --- AUTH STATE LISTENER ---
+        clodyClient.auth.onAuthStateChange(async (event, session) => {
+            const authSection = document.getElementById('auth-section');
+            const dashSection = document.getElementById('dash-section');
+
+            if (session) {
+                authSection.classList.add('hidden');
+                dashSection.classList.remove('hidden');
+                document.getElementById('user-tag').innerText = session.user.email;
+                
+                // Load User Data
+                const { data } = await clodyClient.from('profiles').select('coins').eq('id', session.user.id).single();
+                if (data) document.getElementById('coin-display').innerText = data.coins;
+            } else {
+                authSection.classList.remove('hidden');
+                dashSection.classList.add('hidden');
+            }
+        });
+
+        async function logOutUser() { await clodyClient.auth.signOut(); }
+    </script>
 </body>
 </html>
