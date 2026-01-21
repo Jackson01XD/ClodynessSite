@@ -1,68 +1,96 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CLODYNESS | 1.8.8 Performance</title>
-    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json">
+    <title>Clodyness | Member Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --accent: #9d50bb; --bg: #050508; --card: #0e0e14; --text: #ffffff; }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        .container { background: var(--card); padding: 40px; border-radius: 20px; width: 350px; border: 1px solid #222; text-align: center; }
+        .hidden { display: none; }
+        input { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: var(--accent); border: none; color: white; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 10px; }
+        .balance-box { background: #161620; padding: 20px; border-radius: 12px; margin: 20px 0; border: 1px solid var(--accent); }
+        .coin-txt { font-size: 30px; font-weight: bold; display: block; }
+    </style>
 </head>
 <body>
-    <div id="particles-js"></div>
 
-    <nav class="navbar">
-        <div class="logo">CLODYNESS</div>
-        <div class="nav-links">
-            <a href="#hero">Home</a>
-            <a href="#features">Features</a>
-            <a href="#account">Dashboard</a>
-            <a href="https://github.com/Jackson01XD/ClodynessSite/releases/download/Pre-realease/ClodynessDownload.zip" class="nav-download">Download</a>
+    <div id="auth-ui" class="container">
+        <h2 id="title">Clodyness Account</h2>
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="handleAuth()" id="btn-text">Login</button>
+        <p style="font-size: 12px; cursor: pointer; color: #888;" onclick="toggle()">Switch to Sign Up</p>
+    </div>
+
+    <div id="dash-ui" class="container hidden">
+        <h2>Dashboard</h2>
+        <p id="user-display" style="color: #666;"></p>
+        <div class="balance-box">
+            <small>YOUR BALANCE</small>
+            <span class="coin-txt" id="balance">0</span>
         </div>
-    </nav>
+        <input type="text" id="code-input" placeholder="Enter Gift Code">
+        <button onclick="redeem()" style="background: #333;">Redeem Code</button>
+        <button onclick="logout()" style="background: transparent; border: 1px solid #444; margin-top: 20px;">Logout</button>
+    </div>
 
-    <div class="content-wrapper">
+<script>
+    const client = supabase.createClient("YOUR_URL", "YOUR_KEY");
+    let isLogin = true;
+
+    function toggle() { 
+        isLogin = !isLogin; 
+        document.getElementById('title').innerText = isLogin ? "Clodyness Login" : "Sign Up";
+        document.getElementById('btn-text').innerText = isLogin ? "Login" : "Register";
+    }
+
+    async function handleAuth() {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        if (isLogin) await client.auth.signInWithPassword({ email, password });
+        else await client.auth.signUp({ email, password });
+    }
+
+    client.auth.onAuthStateChange((event, session) => {
+        if (session) {
+            document.getElementById('auth-ui').classList.add('hidden');
+            document.getElementById('dash-ui').classList.remove('hidden');
+            document.getElementById('user-display').innerText = session.user.email;
+            fetchCoins(session.user.id);
+        } else {
+            document.getElementById('auth-ui').classList.remove('hidden');
+            document.getElementById('dash-ui').classList.add('hidden');
+        }
+    });
+
+    async function fetchCoins(uid) {
+        const { data } = await client.from('profiles').select('coins').eq('id', uid).single();
+        if (data) document.getElementById('balance').innerText = data.coins;
+    }
+
+    async function redeem() {
+        const code = document.getElementById('code-input').value;
+        const { data: user } = await client.auth.getUser();
         
-        <section id="hero" class="section">
-            <h1 class="glow-text">CLODYNESS</h1>
-            <p class="subtitle">The next generation of 1.8.8 performance.</p>
-            <a href="https://github.com/Jackson01XD/ClodynessSite/releases/download/Pre-realease/ClodynessDownload.zip" class="btn-main">Download Now</a>
-        </section>
+        // 1. Check code
+        const { data: gift } = await client.from('gift_codes').select('*').eq('code', code).eq('is_used', false).single();
+        if (!gift) return alert("Code invalid or used!");
 
-        <section id="features" class="section">
-            <div class="feature-grid">
-                <div class="feature-card">
-                    <h3>High FPS</h3>
-                    <p>Optimized for Intel Arc B580 and modern hardware.</p>
-                </div>
-                <div class="feature-card">
-                    <h3>Clean GUI</h3>
-                    <p>Fully customizable ClickGUI with modules.</p>
-                </div>
-                <div class="feature-card">
-                    <h3>Discord RPC</h3>
-                    <p>Show your status to your friends in real-time.</p>
-                </div>
-            </div>
-        </section>
+        // 2. Mark code as used immediately
+        await client.from('gift_codes').update({ is_used: true }).eq('code', code);
 
-        <section id="account" class="section">
-            <div class="account-box">
-                <div id="logged-out-ui">
-                    <h2>User Portal</h2>
-                    <button class="btn-discord" id="login-btn">Login with Discord</button>
-                </div>
-                <div id="logged-in-ui" style="display: none;">
-                    <h2 id="user-greeting">Welcome!</h2>
-                    <input type="text" id="code-input" placeholder="Enter 'Pre-realease'">
-                    <button class="btn-claim" onclick="redeemCode()">Redeem</button>
-                </div>
-            </div>
-        </section>
+        // 3. Update user profile
+        const { data: prof } = await client.from('profiles').select('coins').eq('id', user.user.id).single();
+        const newTotal = prof.coins + gift.value;
+        await client.from('profiles').update({ coins: newTotal }).eq('id', user.user.id);
+        
+        document.getElementById('balance').innerText = newTotal;
+        alert("Redeemed!");
+    }
 
-    </div> <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
-    <script src="script.js"></script>
-
+    async function logout() { await client.auth.signOut(); }
+</script>
 </body>
+</html>
