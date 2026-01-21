@@ -19,7 +19,7 @@
         .nav-item { padding: 12px 15px; margin: 5px 0; border-radius: 10px; cursor: pointer; color: #888; transition: 0.3s; }
         .nav-item:hover, .nav-item.active { background: #222; color: white; }
 
-        /* Main Content */
+        /* Main Content Area */
         main { flex: 1; padding: 40px; overflow-y: auto; }
         .view { display: none; }
         .view.active { display: block; }
@@ -28,8 +28,10 @@
         .stat-card { background: var(--card); padding: 25px; border-radius: 15px; border: 1px solid #222; }
         .coin-val { font-size: 32px; font-weight: bold; display: block; margin-top: 10px; }
 
-        input { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: var(--accent); border: none; color: white; font-weight: bold; border-radius: 8px; cursor: pointer; }
+        input { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; outline: none; }
+        input:focus { border-color: var(--accent); }
+        button { width: 100%; padding: 12px; background: var(--accent); border: none; color: white; font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        button:hover { filter: brightness(1.2); }
         .hidden { display: none; }
     </style>
 </head>
@@ -39,7 +41,7 @@
         <div class="auth-box">
             <h2 id="form-title">Login</h2>
             <input type="email" id="email" placeholder="Email">
-            <input type="password" id="password" placeholder="Password">
+            <input type="password" id="password" placeholder="Password (Min 6 chars)">
             <button onclick="runAuth()" id="action-btn">Login</button>
             <p id="toggle-link" style="color:var(--accent); cursor:pointer; font-size:14px; margin-top:20px;" onclick="swapMode()">New here? Sign Up</p>
         </div>
@@ -58,7 +60,7 @@
 
     <main>
         <div id="overview" class="view active">
-            <h1>Welcome Back</h1>
+            <h1>Welcome to Clodyness</h1>
             <div class="grid">
                 <div class="stat-card">
                     <small>CURRENT BALANCE</small>
@@ -74,7 +76,7 @@
         <div id="redeem" class="view">
             <h1>Redeem Gift Code</h1>
             <div class="stat-card" style="max-width: 400px;">
-                <p>Enter your secret code to add coins to your account.</p>
+                <p>Add coins to your account with a secret code.</p>
                 <input type="text" id="gift-code" placeholder="XXXX-XXXX">
                 <button onclick="redeem()">Apply Code</button>
             </div>
@@ -83,20 +85,22 @@
         <div id="launcher" class="view">
             <h1>Launcher Settings</h1>
             <div class="stat-card">
-                <h3>Current Status: <span style="color:#00ff00">Online</span></h3>
-                <p>The Alpha launcher is currently accepting connections. No maintenance scheduled.</p>
-                <button style="background:#222; width: auto; padding: 10px 30px;">Download .EXE</button>
+                <h3>Current Status: <span id="status-tag" style="color:#00ff00">Online</span></h3>
+                <p>The launcher is currently accepting connections. Maintenance is disabled.</p>
+                <button style="background:#222; width: auto; padding: 10px 30px;">Download Launcher .EXE</button>
             </div>
         </div>
     </main>
 
     <script>
+        // Use your verified credentials
         const SB_URL = "https://okbotrgwafkgxehsspng.supabase.co";
         const SB_KEY = "sb_publishable_6SZuxGeBbnXLJxYsHhq_4g_hb06s6T5";
         const clodyClient = window.supabase.createClient(SB_URL, SB_KEY);
 
         let currentMode = "login";
 
+        // Toggle Login/Signup Mode
         function swapMode() {
             currentMode = (currentMode === "login") ? "signup" : "login";
             document.getElementById('form-title').innerText = (currentMode === "login") ? "Login" : "Sign Up";
@@ -104,15 +108,24 @@
             document.getElementById('toggle-link').innerText = (currentMode === "login") ? "New here? Sign Up" : "Back to Login";
         }
 
+        // Run Auth with detailed error reporting
         async function runAuth() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const { error } = (currentMode === "login") 
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            if (!email || !password) return alert("Please fill in both fields!");
+
+            const { data, error } = (currentMode === "login") 
                 ? await clodyClient.auth.signInWithPassword({ email, password })
                 : await clodyClient.auth.signUp({ email, password });
-            if (error) alert(error.message);
+
+            if (error) {
+                alert("Auth Error: " + error.message);
+                console.error(error);
+            }
         }
 
+        // Sidebar Navigation Logic
         function showView(viewId, el) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
@@ -120,10 +133,13 @@
             el.classList.add('active');
         }
 
+        // Listen for Login State
         clodyClient.auth.onAuthStateChange(async (event, session) => {
             if (session) {
                 document.getElementById('auth-overlay').classList.add('hidden');
                 document.getElementById('user-display').innerText = session.user.email;
+                
+                // Fetch user coins from the profiles table
                 const { data } = await clodyClient.from('profiles').select('coins').eq('id', session.user.id).single();
                 if (data) document.getElementById('coin-display').innerText = data.coins;
             } else {
@@ -131,20 +147,28 @@
             }
         });
 
+        // Redeem Code System
         async function redeem() {
-            const code = document.getElementById('gift-code').value.trim();
+            const codeInput = document.getElementById('gift-code').value.trim();
             const { data: { user } } = await clodyClient.auth.getUser();
-            const { data: gift } = await clodyClient.from('gift_codes').select('*').eq('code', code).eq('is_used', false).single();
-            
-            if (!gift) return alert("Invalid or used code");
 
-            await clodyClient.from('gift_codes').update({ is_used: true }).eq('code', code);
-            const { data: p } = await clodyClient.from('profiles').select('coins').eq('id', user.id).single();
-            const newTotal = (p.coins || 0) + gift.value;
+            if (!codeInput) return;
+
+            // 1. Check if valid and not used
+            const { data: gift, error } = await clodyClient.from('gift_codes').select('*').eq('code', codeInput).eq('is_used', false).single();
+            if (error || !gift) return alert("Invalid or used code!");
+
+            // 2. Mark code as used
+            await clodyClient.from('gift_codes').update({ is_used: true }).eq('code', codeInput);
+
+            // 3. Update user profile coins
+            const { data: profile } = await clodyClient.from('profiles').select('coins').eq('id', user.id).single();
+            const newTotal = (profile.coins || 0) + gift.value;
             
             await clodyClient.from('profiles').update({ coins: newTotal }).eq('id', user.id);
             document.getElementById('coin-display').innerText = newTotal;
-            alert("Redeemed!");
+            alert(`Success! Added ${gift.value} coins.`);
+            document.getElementById('gift-code').value = "";
         }
     </script>
 </body>
