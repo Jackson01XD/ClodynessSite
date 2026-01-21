@@ -3,72 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clodyness Client | Official</title>
-    <style>
-        :root {
-            --primary: #7289da; /* Discord Blue */
-            --bg: #0f0f0f;
-            --card: rgba(255, 255, 255, 0.05);
-        }
-        body {
-            background-color: var(--bg);
-            color: white;
-            font-family: 'Segoe UI', sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin: 0;
-        }
-        .hero {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: radial-gradient(circle, #1a1a1a 0%, #000 100%);
-            width: 100%;
-        }
-        h1 { font-size: 4rem; margin-bottom: 0; text-shadow: 0 0 20px var(--primary); }
-        p { color: #aaa; font-size: 1.2rem; }
-        .download-btn {
-            background: var(--primary);
-            color: white;
-            padding: 15px 40px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: bold;
-            transition: 0.3s;
-            margin-top: 20px;
-            box-shadow: 0 0 15px rgba(114, 137, 218, 0.4);
-        }
-        .download-btn:hover { transform: scale(1.05); background: #5b6eae; }
-        .features {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            padding: 50px;
-            max-width: 1000px;
-        }
-        .feature-card {
-            background: var(--card);
-            padding: 20px;
-            border-radius: 15px;
-            border: 1px solid rgba(255,255,255,0.1);
-            text-align: center;
-        }
-    </style>
+    <title>CLODYNESS | 1.8.8 Performance</title>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-    <div class="hero">
-        <h1>CLODYNESS</h1>
-        <p>The next generation of 1.8.8 performance.</p>
-      <a href="https://github.com/Jackson01XD/ClodynessSite/releases/download/Pre-realease/ClodynessDownload.zip" class="download-btn">
-    </div>
+    <div id="particles-js"></div>
 
-    <div class="features">
-        <div class="feature-card"><h3>High FPS</h3><p>Optimized for Intel Arc B580 and modern hardware.</p></div>
-        <div class="feature-card"><h3>Clean GUI</h3><p>Fully customizable ClickGUI with Click-and-Drag modules.</p></div>
-        <div class="feature-card"><h3>Discord RPC</h3><p>Show your status to your friends in real-time.</p></div>
-    </div>
+    <nav class="navbar">
+        <div class="logo">CLODYNESS</div>
+        <div class="nav-links">
+            <a href="#hero">Home</a>
+            <a href="#features">Features</a>
+            <a href="#account">Dashboard</a>
+            <a href="https://github.com/Jackson01XD/ClodynessSite/releases/download/Pre-realease/ClodynessDownload.zip" class="nav-download">Download</a>
+        </div>
+    </nav>
+
+    <div class="content-wrapper">
+        
+        <section id="hero" class="section">
+            <h1 class="glow-text">CLODYNESS</h1>
+            <p class="subtitle">The next generation of 1.8.8 performance.</p>
+            <a href="https://github.com/Jackson01XD/ClodynessSite/releases/download/Pre-realease/ClodynessDownload.zip" class="btn-main">Download Now</a>
+        </section>
+
+        <section id="features" class="section">
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>High FPS</h3>
+                    <p>Optimized for Intel Arc B580 and modern hardware.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Clean GUI</h3>
+                    <p>Fully customizable ClickGUI with modules.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Discord RPC</h3>
+                    <p>Show your status to your friends in real-time.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="account" class="section">
+            <div class="account-box">
+                <div id="logged-out-ui">
+                    <h2>User Portal</h2>
+                    <button class="btn-discord" id="login-btn">Login with Discord</button>
+                </div>
+                <div id="logged-in-ui" style="display: none;">
+                    <h2 id="user-greeting">Welcome!</h2>
+                    <input type="text" id="code-input" placeholder="Enter 'Pre-realease'">
+                    <button class="btn-claim" onclick="redeemCode()">Redeem</button>
+                </div>
+            </div>
+        </section>
+
+    </div> <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script src="script.js"></script>
 </body>
-</html>
