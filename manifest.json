@@ -1,0 +1,15 @@
+{
+  "name": "Clodyness Launcher",
+  "short_name": "Clodyness",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#030305",
+  "theme_color": "#9d50bb",
+  "icons": [
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
