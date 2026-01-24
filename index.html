@@ -250,10 +250,11 @@
         }
 
         /* SUPABASE AUTH SYSTEM */
-        // TODO: Replace with your actual Supabase URL and Anon Key
         const supabaseUrl = 'https://okbotrgwafkgxehsspng.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9rYm90cmd3YWZrZ3hlaHNzcG5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg5NzQwMTksImV4cCI6MjA4NDU1MDAxOX0.n52nhv8TcZqDOdynEaI1-m3KczSXdTqJGcU2FOO4nWE';
-        const _supabase = supabase.createClient(https://okbotrgwafkgxehsspng.supabase.co, eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9rYm90cmd3YWZrZ3hlaHNzcG5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg5NzQwMTksImV4cCI6MjA4NDU1MDAxOX0.n52nhv8TcZqDOdynEaI1-m3KczSXdTqJGcU2FOO4nWE);
+        
+        // Fixed: Using the variables defined above properly
+        const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
         let isSignUp = false;
 
@@ -281,7 +282,6 @@
             await _supabase.auth.signOut();
         }
 
-        // Auth State Listener
         _supabase.auth.onAuthStateChange((event, session) => {
             const fields = document.getElementById("authFields");
             const profile = document.getElementById("profileInfo");
