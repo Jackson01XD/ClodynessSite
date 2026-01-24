@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Clodyness | Alpha</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
     <style>
         :root {
             --primary-purple: #9d50bb;
@@ -13,91 +14,49 @@
         }
 
         body, html {
-            margin: 0;
-            padding: 0;
+            margin: 0; padding: 0;
             font-family: 'Segoe UI', sans-serif;
             background-color: var(--bg-dark);
             color: white;
             overflow-x: hidden;
         }
 
-        /* Animated Background */
-        .vibe-bg {
+        /* Particle Container */
+        #particles-js {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at 50% 50%, #1a0b2e 0%, #050508 100%);
+            width: 100%; height: 100%;
             z-index: -1;
+            background: radial-gradient(circle at 50% 50%, #1a0b2e 0%, #050508 100%);
         }
 
-        .glow-orb {
-            position: absolute;
-            width: 600px;
-            height: 600px;
-            background: var(--primary-purple);
-            filter: blur(150px);
-            border-radius: 50%;
-            opacity: 0.15;
-            animation: float 12s infinite alternate ease-in-out;
-        }
-
-        @keyframes float {
-            0% { transform: translate(-15%, -15%); }
-            100% { transform: translate(15%, 15%); }
-        }
-
-        /* Navigation Tabs */
+        /* Navigation */
         nav {
-            display: flex;
-            justify-content: center;
+            display: flex; justify-content: center;
             padding: 20px 0;
             background: var(--glass);
             backdrop-filter: blur(15px);
             border-bottom: 1px solid rgba(157, 80, 187, 0.2);
-            position: fixed;
-            width: 100%;
-            top: 0;
-            z-index: 100;
+            position: fixed; width: 100%; top: 0; z-index: 100;
         }
 
-        .nav-tabs {
-            display: flex;
-            gap: 10px;
-        }
+        .nav-tabs { display: flex; gap: 10px; }
 
         .tab {
-            cursor: pointer;
-            color: #888;
-            font-weight: 700;
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            transition: 0.3s;
-            padding: 12px 25px;
-            border-radius: 12px;
-            border: none;
-            background: transparent;
+            cursor: pointer; color: #888; font-weight: 700; font-size: 13px;
+            text-transform: uppercase; letter-spacing: 1.5px;
+            transition: 0.3s; padding: 12px 25px; border-radius: 12px;
+            border: none; background: transparent;
         }
 
         .tab:hover { color: #fff; background: rgba(255,255,255,0.05); }
+        .tab.active { color: white; background: rgba(157, 80, 187, 0.3); text-shadow: 0 0 10px var(--primary-purple); }
 
-        .tab.active {
-            color: white;
-            background: rgba(157, 80, 187, 0.3);
-            text-shadow: 0 0 10px var(--primary-purple);
-        }
-
-        /* Content Structure */
+        /* Content */
         .page-content {
-            display: none;
-            max-width: 1000px;
-            margin: 160px auto 50px;
-            padding: 20px;
+            display: none; max-width: 1000px;
+            margin: 160px auto 50px; padding: 20px;
             animation: slideUp 0.5s ease forwards;
         }
-
         .page-content.active { display: block; }
 
         @keyframes slideUp {
@@ -108,54 +67,30 @@
         .card {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(157, 80, 187, 0.1);
-            padding: 40px;
-            border-radius: 25px;
-            backdrop-filter: blur(5px);
+            padding: 40px; border-radius: 25px; backdrop-filter: blur(5px);
         }
 
-        /* UI Elements */
         h1 { font-size: 70px; font-weight: 900; margin: 0; letter-spacing: -2px; }
         .purple-text { color: var(--primary-purple); }
         
         .btn {
-            display: inline-block;
-            padding: 18px 45px;
-            background: var(--primary-purple);
-            color: white;
-            text-decoration: none;
-            border-radius: 50px;
-            font-weight: bold;
-            font-size: 16px;
-            transition: 0.3s;
-            border: none;
-            cursor: pointer;
+            display: inline-block; padding: 15px 40px;
+            background: var(--primary-purple); color: white;
+            text-decoration: none; border-radius: 50px;
+            font-weight: bold; transition: 0.3s; border: none; cursor: pointer;
         }
-
-        .btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(157, 80, 187, 0.5);
-        }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(157, 80, 187, 0.4); }
 
         input {
-            width: 100%;
-            background: #08080c;
-            border: 1px solid #1a1a2e;
-            color: white;
-            padding: 12px;
-            margin: 10px 0 20px 0;
-            border-radius: 10px;
-            box-sizing: border-box;
+            width: 100%; background: #08080c; border: 1px solid #1a1a2e;
+            color: white; padding: 12px; margin: 10px 0 15px 0; border-radius: 10px; box-sizing: border-box;
         }
-
-        input:focus { border-color: var(--primary-purple); outline: none; }
-
+        input:disabled { opacity: 0.4; cursor: not-allowed; }
     </style>
 </head>
 <body>
 
-    <div class="vibe-bg">
-        <div class="glow-orb"></div>
-    </div>
+    <div id="particles-js"></div>
 
     <nav>
         <div class="nav-tabs">
@@ -163,139 +98,135 @@
             <button class="tab" onclick="openPage(event, 'features')">Features</button>
             <button class="tab" onclick="openPage(event, 'store')">Store</button>
             <button class="tab" onclick="openPage(event, 'account')">Account</button>
-            <button class="tab" onclick="openPage(event, 'discord')">Discord</button>
         </div>
     </nav>
 
     <div id="home" class="page-content active">
         <center>
             <h1>CLODY<span class="purple-text">NESS</span></h1>
-            <p style="color: #888; font-size: 22px; margin-top: 10px;">The Next Generation of 1.8.8 Performance.</p>
-            <br><br>
-            <a href="https://github.com/Jackson01XD/ClodynessSite/releases/download/Alpha/Clodyness.jar" class="btn">DOWNLOAD ALPHA</a>
+            <p style="color: #888; font-size: 20px;">The Next Generation of 1.8.8 Performance.</p>
+            <br><a href="#" class="btn">DOWNLOAD ALPHA</a>
         </center>
     </div>
 
     <div id="features" class="page-content">
         <h2 class="purple-text">Built-in Modules</h2>
-        <div class="card" style="margin-bottom: 20px;">
+        <div class="card">
             <h3>Optimized Motion Blur</h3>
             <p style="color: #aaa;">Silky smooth motion blur that doesn't tank your FPS.</p>
-        </div>
-        <div class="card">
-            <h3>Custom Crosshair</h3>
-            <p style="color: #aaa;">Deep customization for your crosshair directly in-game.</p>
         </div>
     </div>
 
     <div id="store" class="page-content">
         <center>
-            <div class="card" style="max-width: 500px;">
+            <div class="card">
                 <h2 class="purple-text">Cosmetics Store</h2>
-                <p>Bib the Shopkeeper is currently organizing the capes and wings.</p>
-                <p style="color: #444; font-size: 14px;">CHECK BACK DURING BETA!</p>
+                <p>Bib the Shopkeeper is currently organizing the capes.</p>
             </div>
         </center>
     </div>
 
     <div id="account" class="page-content">
         <center>
-            <div class="card" style="max-width: 400px; text-align: left;">
-                <h2 id="authTitle" class="purple-text" style="margin-top: 0;">Login</h2>
-                
-                <div id="authFields">
-                    <label style="font-size: 11px; color: #555; font-weight: bold;">EMAIL ADDRESS</label>
-                    <input type="email" id="email" placeholder="clody@example.com">
-                    
-                    <label style="font-size: 11px; color: #555; font-weight: bold;">PASSWORD</label>
-                    <input type="password" id="password" placeholder="••••••••">
-                    
-                    <button class="btn" onclick="handleAuth()" style="width: 100%;">CONTINUE</button>
-                    
-                    <p style="font-size: 13px; color: #666; text-align: center; margin-top: 20px;">
-                        <span id="toggleText">Need a Clod account?</span> 
-                        <span onclick="toggleMode()" style="color: var(--primary-purple); cursor: pointer; font-weight: bold;">Register</span>
-                    </p>
+            <div class="card" style="max-width: 450px; text-align: left;">
+                <h2 id="auth-title" class="purple-text" style="margin-top: 0;">Clod Account</h2>
+
+                <div id="logged-out-ui">
+                    <p style="color: #888; margin-bottom: 25px;">Sign in with Discord to manage your Clodyness profile and skins.</p>
+                    <button id="login-btn" class="btn" style="width: 100%; background: #5865F2;">LOGIN WITH DISCORD</button>
                 </div>
 
-                <div id="profileInfo" style="display: none; text-align: center;">
-                    <p style="color: #888;">Logged in as:</p>
-                    <h3 id="userDisplay" class="purple-text" style="margin: 10px 0 30px 0;"></h3>
-                    <button class="btn" onclick="signOut()" style="background: #222; width: 100%;">LOG OUT</button>
+                <div id="logged-in-ui" style="display: none;">
+                    <p id="user-greeting" style="text-align: center; font-weight: bold;"></p>
+                    
+                    <label style="font-size: 11px; color: #555;">MINECRAFT IGN</label>
+                    <input type="text" id="mc-name" placeholder="Minecraft Username">
+                    
+                    <label style="font-size: 11px; color: #555;">PLAYER SKIN (.PNG)</label>
+                    <div style="border: 1px dashed #333; padding: 15px; border-radius: 10px; margin: 10px 0;">
+                        <input type="file" id="skin-upload" accept=".png" style="margin: 0; padding: 5px; font-size: 12px;">
+                    </div>
+
+                    <label style="font-size: 11px; color: #555;">REDEEM CODE 🔒</label>
+                    <input type="text" placeholder="LOCKED - BETA ONLY" disabled>
+
+                    <button class="btn" onclick="saveProfile()" style="width: 100%; margin-top: 10px;">SAVE PROFILE</button>
+                    <button class="btn" onclick="logout()" style="width: 100%; margin-top: 10px; background: #222;">LOGOUT</button>
                 </div>
             </div>
         </center>
     </div>
 
-    <div id="discord" class="page-content">
-        <center>
-            <h1>GET CONNECTED</h1>
-            <p style="color: #888;">Join 500+ players in the official Discord.</p>
-            <br>
-            <a href="#" class="btn" style="background: #5865F2;">JOIN DISCORD</a>
-        </center>
-    </div>
-
     <script>
-        /* TAB SYSTEM */
+        // --- CONFIG ---
+        const SUPABASE_URL = 'https://okbotrgwafkgxehsspng.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_6SZuxGeBbnXLJxYsHhq_4g_hb06s6T5';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // --- TABS ---
         function openPage(evt, pageName) {
-            var content = document.getElementsByClassName("page-content");
-            for (var i = 0; i < content.length; i++) content[i].classList.remove("active");
-
-            var tabs = document.getElementsByClassName("tab");
-            for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove("active");
-
+            const pages = document.getElementsByClassName("page-content");
+            for (let p of pages) p.classList.remove("active");
+            const tabs = document.getElementsByClassName("tab");
+            for (let t of tabs) t.classList.remove("active");
             document.getElementById(pageName).classList.add("active");
             evt.currentTarget.classList.add("active");
         }
 
-        /* SUPABASE AUTH SYSTEM */
-        const supabaseUrl = 'https://okbotrgwafkgxehsspng.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9rYm90cmd3YWZrZ3hlaHNzcG5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg5NzQwMTksImV4cCI6MjA4NDU1MDAxOX0.n52nhv8TcZqDOdynEaI1-m3KczSXdTqJGcU2FOO4nWE';
-        
-        // Fixed: Using the variables defined above properly
-        const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
-
-        let isSignUp = false;
-
-        function toggleMode() {
-            isSignUp = !isSignUp;
-            document.getElementById("authTitle").innerText = isSignUp ? "Create Account" : "Login";
-            document.getElementById("toggleText").innerText = isSignUp ? "Have an account?" : "Need a Clod account?";
-        }
-
-        async function handleAuth() {
-            const email = document.getElementById("email").value;
-            const password = document.getElementById("password").value;
-
-            if (isSignUp) {
-                const { error } = await _supabase.auth.signUp({ email, password });
-                if (error) alert(error.message);
-                else alert("Account created! Check your email for a verification link.");
-            } else {
-                const { error } = await _supabase.auth.signInWithPassword({ email, password });
-                if (error) alert(error.message);
-            }
-        }
-
-        async function signOut() {
-            await _supabase.auth.signOut();
-        }
-
-        _supabase.auth.onAuthStateChange((event, session) => {
-            const fields = document.getElementById("authFields");
-            const profile = document.getElementById("profileInfo");
-            const userDisplay = document.getElementById("userDisplay");
-
-            if (session) {
-                fields.style.display = "none";
-                profile.style.display = "block";
-                userDisplay.innerText = session.user.email;
-            } else {
-                fields.style.display = "block";
-                profile.style.display = "none";
+        // --- PARTICLES ---
+        particlesJS("particles-js", {
+            "particles": {
+                "number": { "value": 60 },
+                "color": { "value": "#9d50bb" },
+                "shape": { "type": "circle" },
+                "opacity": { "value": 0.5 },
+                "size": { "value": 3 },
+                "line_linked": { "enable": true, "distance": 150, "color": "#6e48aa", "opacity": 0.4, "width": 1 },
+                "move": { "enable": true, "speed": 2 }
             }
         });
+
+        // --- AUTH LOGIC ---
+        async function checkUser() {
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            const loggedInUI = document.getElementById('logged-in-ui');
+            const loggedOutUI = document.getElementById('logged-out-ui');
+
+            if (user) {
+                loggedOutUI.style.display = 'none';
+                loggedInUI.style.display = 'block';
+                document.getElementById('user-greeting').innerText = `Welcome, ${user.user_metadata.full_name || 'Player'}`;
+                
+                // Load existing data if available
+                if (user.user_metadata.mc_name) {
+                    document.getElementById('mc-name').value = user.user_metadata.mc_name;
+                }
+            } else {
+                loggedOutUI.style.display = 'block';
+                loggedInUI.style.display = 'none';
+            }
+        }
+
+        document.getElementById('login-btn').addEventListener('click', async () => {
+            await supabaseClient.auth.signInWithOAuth({ provider: 'discord' });
+        });
+
+        async function logout() {
+            await supabaseClient.auth.signOut();
+            window.location.reload();
+        }
+
+        async function saveProfile() {
+            const mcName = document.getElementById('mc-name').value;
+            const { data, error } = await supabaseClient.auth.updateUser({
+                data: { mc_name: mcName }
+            });
+
+            if (error) alert("Error saving: " + error.message);
+            else alert("Profile Synced to Clodyness!");
+        }
+
+        checkUser();
     </script>
 </body>
 </html>
