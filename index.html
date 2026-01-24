@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clodyness | Alpha</title>
+    <title>Clodyness | Alpha Portal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
     <style>
@@ -21,7 +21,6 @@
             overflow-x: hidden;
         }
 
-        /* Particle Container */
         #particles-js {
             position: fixed;
             width: 100%; height: 100%;
@@ -29,7 +28,6 @@
             background: radial-gradient(circle at 50% 50%, #1a0b2e 0%, #050508 100%);
         }
 
-        /* Navigation */
         nav {
             display: flex; justify-content: center;
             padding: 20px 0;
@@ -51,7 +49,6 @@
         .tab:hover { color: #fff; background: rgba(255,255,255,0.05); }
         .tab.active { color: white; background: rgba(157, 80, 187, 0.3); text-shadow: 0 0 10px var(--primary-purple); }
 
-        /* Content */
         .page-content {
             display: none; max-width: 1000px;
             margin: 160px auto 50px; padding: 20px;
@@ -78,6 +75,7 @@
             background: var(--primary-purple); color: white;
             text-decoration: none; border-radius: 50px;
             font-weight: bold; transition: 0.3s; border: none; cursor: pointer;
+            text-align: center;
         }
         .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(157, 80, 187, 0.4); }
 
@@ -86,6 +84,7 @@
             color: white; padding: 12px; margin: 10px 0 15px 0; border-radius: 10px; box-sizing: border-box;
         }
         input:disabled { opacity: 0.4; cursor: not-allowed; }
+        label { font-size: 11px; color: #555; text-transform: uppercase; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -129,28 +128,42 @@
     <div id="account" class="page-content">
         <center>
             <div class="card" style="max-width: 450px; text-align: left;">
-                <h2 id="auth-title" class="purple-text" style="margin-top: 0;">Clod Account</h2>
+                <h2 class="purple-text" style="margin-top: 0;">Clod Account</h2>
 
                 <div id="logged-out-ui">
-                    <p style="color: #888; margin-bottom: 25px;">Sign in with Discord to manage your Clodyness profile and skins.</p>
-                    <button id="login-btn" class="btn" style="width: 100%; background: #5865F2;">LOGIN WITH DISCORD</button>
+                    <p style="color: #888; margin-bottom: 20px;">Sign in to sync your coins and skins.</p>
+                    
+                    <label>Email Address</label>
+                    <input type="email" id="auth-email" placeholder="email@example.com">
+                    
+                    <label>Password</label>
+                    <input type="password" id="auth-password" placeholder="••••••••">
+
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="handleEmailAuth('login')" class="btn" style="flex: 1; font-size: 13px;">LOG IN</button>
+                        <button onclick="handleEmailAuth('signup')" class="btn" style="flex: 1; font-size: 13px; background: #222;">SIGN UP</button>
+                    </div>
+
+                    <div style="text-align: center; margin: 15px 0; color: #333;">OR</div>
+
+                    <button id="discord-login-btn" class="btn" style="width: 100%; background: #5865F2;">LOGIN WITH DISCORD</button>
                 </div>
 
                 <div id="logged-in-ui" style="display: none;">
-                    <p id="user-greeting" style="text-align: center; font-weight: bold;"></p>
+                    <p id="user-greeting" style="text-align: center; font-weight: bold; color: var(--primary-purple);"></p>
                     
-                    <label style="font-size: 11px; color: #555;">MINECRAFT IGN</label>
-                    <input type="text" id="mc-name" placeholder="Minecraft Username">
+                    <label>Minecraft IGN</label>
+                    <input type="text" id="mc-name" placeholder="Username">
                     
-                    <label style="font-size: 11px; color: #555;">PLAYER SKIN (.PNG)</label>
-                    <div style="border: 1px dashed #333; padding: 15px; border-radius: 10px; margin: 10px 0;">
-                        <input type="file" id="skin-upload" accept=".png" style="margin: 0; padding: 5px; font-size: 12px;">
+                    <label>Current Balance</label>
+                    <input type="text" id="coin-display" value="0 Coins" disabled style="color: #ffcc00; font-weight: bold;">
+
+                    <label>Player Skin (.png)</label>
+                    <div style="border: 1px dashed #333; padding: 15px; border-radius: 10px; margin: 10px 0; text-align: center;">
+                        <input type="file" id="skin-upload" accept=".png" style="font-size: 11px;">
                     </div>
 
-                    <label style="font-size: 11px; color: #555;">REDEEM CODE 🔒</label>
-                    <input type="text" placeholder="LOCKED - BETA ONLY" disabled>
-
-                    <button class="btn" onclick="saveProfile()" style="width: 100%; margin-top: 10px;">SAVE PROFILE</button>
+                    <button class="btn" onclick="saveProfile()" style="width: 100%; margin-top: 10px;">SAVE CHANGES</button>
                     <button class="btn" onclick="logout()" style="width: 100%; margin-top: 10px; background: #222;">LOGOUT</button>
                 </div>
             </div>
@@ -158,12 +171,12 @@
     </div>
 
     <script>
-        // --- CONFIG ---
+        // --- SUPABASE CONFIG ---
         const SUPABASE_URL = 'https://okbotrgwafkgxehsspng.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_6SZuxGeBbnXLJxYsHhq_4g_hb06s6T5';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // --- TABS ---
+        // --- NAVIGATION ---
         function openPage(evt, pageName) {
             const pages = document.getElementsByClassName("page-content");
             for (let p of pages) p.classList.remove("active");
@@ -173,7 +186,79 @@
             evt.currentTarget.classList.add("active");
         }
 
-        // --- PARTICLES ---
+        // --- CORE AUTH LOGIC ---
+        async function checkUser() {
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            const loggedInUI = document.getElementById('logged-in-ui');
+            const loggedOutUI = document.getElementById('logged-out-ui');
+
+            if (user) {
+                loggedOutUI.style.display = 'none';
+                loggedInUI.style.display = 'block';
+                
+                // Fetch data from our custom 'profiles' table
+                const { data: profile } = await supabaseClient
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single();
+
+                if (profile) {
+                    document.getElementById('user-greeting').innerText = `Logged in as ${profile.username || user.email}`;
+                    document.getElementById('mc-name').value = profile.username || "";
+                    document.getElementById('coin-display').value = `${profile.coins} Coins 🪙`;
+                }
+            } else {
+                loggedOutUI.style.display = 'block';
+                loggedInUI.style.display = 'none';
+            }
+        }
+
+        // Handle Email Login or Signup
+        async function handleEmailAuth(type) {
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+
+            if (!email || !password) return alert("Please fill in email and password.");
+
+            let result;
+            if (type === 'signup') {
+                result = await supabaseClient.auth.signUp({ email, password });
+                if (!result.error) alert("Success! Please check your email for a verification link.");
+            } else {
+                result = await supabaseClient.auth.signInWithPassword({ email, password });
+            }
+
+            if (result.error) alert(result.error.message);
+            else checkUser();
+        }
+
+        // Discord OAuth
+        document.getElementById('discord-login-btn').addEventListener('click', async () => {
+            await supabaseClient.auth.signInWithOAuth({ provider: 'discord' });
+        });
+
+        async function logout() {
+            await supabaseClient.auth.signOut();
+            window.location.reload();
+        }
+
+        // Save Profile Data
+        async function saveProfile() {
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            const mcName = document.getElementById('mc-name').value;
+
+            // Upsert: Updates if exists, creates if not
+            const { error } = await supabaseClient.from('profiles').upsert({
+                id: user.id,
+                username: mcName
+            });
+
+            if (error) alert("Error saving profile: " + error.message);
+            else alert("Profile saved to Clodyness Cloud!");
+        }
+
+        // --- VISUALS ---
         particlesJS("particles-js", {
             "particles": {
                 "number": { "value": 60 },
@@ -186,46 +271,7 @@
             }
         });
 
-        // --- AUTH LOGIC ---
-        async function checkUser() {
-            const { data: { user } } = await supabaseClient.auth.getUser();
-            const loggedInUI = document.getElementById('logged-in-ui');
-            const loggedOutUI = document.getElementById('logged-out-ui');
-
-            if (user) {
-                loggedOutUI.style.display = 'none';
-                loggedInUI.style.display = 'block';
-                document.getElementById('user-greeting').innerText = `Welcome, ${user.user_metadata.full_name || 'Player'}`;
-                
-                // Load existing data if available
-                if (user.user_metadata.mc_name) {
-                    document.getElementById('mc-name').value = user.user_metadata.mc_name;
-                }
-            } else {
-                loggedOutUI.style.display = 'block';
-                loggedInUI.style.display = 'none';
-            }
-        }
-
-        document.getElementById('login-btn').addEventListener('click', async () => {
-            await supabaseClient.auth.signInWithOAuth({ provider: 'discord' });
-        });
-
-        async function logout() {
-            await supabaseClient.auth.signOut();
-            window.location.reload();
-        }
-
-        async function saveProfile() {
-            const mcName = document.getElementById('mc-name').value;
-            const { data, error } = await supabaseClient.auth.updateUser({
-                data: { mc_name: mcName }
-            });
-
-            if (error) alert("Error saving: " + error.message);
-            else alert("Profile Synced to Clodyness!");
-        }
-
+        // Initialize user check on load
         checkUser();
     </script>
 </body>
