@@ -11,11 +11,12 @@
             --primary-purple: #9d50bb;
             --bg-dark: #050508;
             --glass: rgba(15, 15, 25, 0.85);
+            --accent-gold: #ffcc00;
         }
 
         body, html {
             margin: 0; padding: 0;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-dark);
             color: white;
             overflow-x: hidden;
@@ -65,9 +66,7 @@
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(157, 80, 187, 0.1);
             padding: 40px; border-radius: 25px; backdrop-filter: blur(5px);
-            transition: 0.3s ease;
         }
-        .card:hover { border-color: rgba(157, 80, 187, 0.4); }
 
         h1 { font-size: 70px; font-weight: 900; margin: 0; letter-spacing: -2px; }
         .purple-text { color: var(--primary-purple); }
@@ -84,11 +83,16 @@
         input {
             width: 100%; background: #08080c; border: 1px solid #1a1a2e;
             color: white; padding: 12px; margin: 10px 0 15px 0; border-radius: 10px; box-sizing: border-box;
-            outline: none; transition: 0.3s;
         }
-        input:focus { border-color: var(--primary-purple); }
         input:disabled { opacity: 0.4; cursor: not-allowed; }
-        label { font-size: 11px; color: #777; text-transform: uppercase; font-weight: bold; }
+        label { font-size: 11px; color: #555; text-transform: uppercase; font-weight: bold; }
+
+        #dl-help {
+            display: none; margin: 20px auto; color: var(--accent-gold); 
+            font-size: 13px; border: 1px solid var(--accent-gold); 
+            padding: 15px; border-radius: 15px; max-width: 450px;
+            background: rgba(255, 204, 0, 0.05);
+        }
     </style>
 </head>
 <body>
@@ -109,7 +113,13 @@
             <h1>CLODY<span class="purple-text">NESS</span></h1>
             <p style="color: #888; font-size: 20px;">The Next Generation of 1.8.8 Performance.</p>
             <br>
-            <a href="https://github.com/Jackson01XD/ClodynessSite/releases/download/Nightly_Alpha/ClodynessLauncher_Setup.exe" class="btn">DOWNLOAD ALPHA</a>
+            <a href="https://tinyurl.com/clodynessinstaller" class="btn" id="dl-btn">DOWNLOAD ALPHA</a>
+            
+            <div id="dl-help">
+                <strong>⚠️ DOWNLOAD BLOCKED?</strong><br>
+                Browsers may flag new files. Click the <b>arrow/three dots</b> next to the download and choose <b>'Keep'</b>. 
+                Then click <b>'More Info'</b> -> <b>'Run Anyway'</b> on the installer!
+            </div>
         </center>
     </div>
 
@@ -117,12 +127,12 @@
         <h2 class="purple-text">Built-in Modules</h2>
         <div class="card">
             <h3>Optimized Motion Blur</h3>
-            <p style="color: #aaa;">Silky smooth motion blur that doesn't tank your FPS. Fully adjustable strength via the in-game HUD.</p>
+            <p style="color: #aaa;">Silky smooth motion blur that doesn't tank your FPS. Fully adjustable for your playstyle.</p>
         </div>
         <br>
         <div class="card">
-            <h3>Custom Crosshair Editor</h3>
-            <p style="color: #aaa;">Draw your own crosshair pixel-by-pixel directly in the client menu.</p>
+            <h3>Draggable Scoreboard</h3>
+            <p style="color: #aaa;">Take control of your HUD. Move the server scoreboard anywhere on your screen.</p>
         </div>
     </div>
 
@@ -130,7 +140,7 @@
         <center>
             <div class="card">
                 <h2 class="purple-text">Cosmetics Store</h2>
-                <p>Bib the Shopkeeper is currently organizing the capes and wings. Check back soon!</p>
+                <p>Bib the Shopkeeper is currently organizing the capes and wings. Stay tuned!</p>
             </div>
         </center>
     </div>
@@ -141,7 +151,7 @@
                 <h2 class="purple-text" style="margin-top: 0;">Clod Account</h2>
 
                 <div id="logged-out-ui">
-                    <p style="color: #888; margin-bottom: 20px;">Sign in to sync your coins and skins across the Clodyness network.</p>
+                    <p style="color: #888; margin-bottom: 20px;">Sign in to sync your coins and skins.</p>
                     
                     <label>Email Address</label>
                     <input type="email" id="auth-email" placeholder="email@example.com">
@@ -166,7 +176,7 @@
                     <input type="text" id="mc-name" placeholder="Username">
                     
                     <label>Current Balance</label>
-                    <input type="text" id="coin-display" value="0 Coins" disabled style="color: #ffcc00; font-weight: bold;">
+                    <input type="text" id="coin-display" value="0 Coins" disabled style="color: var(--accent-gold); font-weight: bold;">
 
                     <label>Player Skin (.png)</label>
                     <div style="border: 1px dashed #333; padding: 15px; border-radius: 10px; margin: 10px 0; text-align: center;">
@@ -206,15 +216,14 @@
                 loggedOutUI.style.display = 'none';
                 loggedInUI.style.display = 'block';
                 
-                // Fetch profile
-                const { data: profile, error } = await supabaseClient
+                const { data: profile } = await supabaseClient
                     .from('profiles')
                     .select('*')
                     .eq('id', user.id)
                     .single();
 
                 if (profile) {
-                    document.getElementById('user-greeting').innerText = `Welcome, ${profile.username || user.email}`;
+                    document.getElementById('user-greeting').innerText = `Logged in as ${profile.username || user.email}`;
                     document.getElementById('mc-name').value = profile.username || "";
                     document.getElementById('coin-display').value = `${profile.coins || 0} Coins 🪙`;
                 }
@@ -227,13 +236,12 @@
         async function handleEmailAuth(type) {
             const email = document.getElementById('auth-email').value;
             const password = document.getElementById('auth-password').value;
-
             if (!email || !password) return alert("Please fill in email and password.");
 
             let result;
             if (type === 'signup') {
                 result = await supabaseClient.auth.signUp({ email, password });
-                if (!result.error) alert("Check your email for the confirmation link!");
+                if (!result.error) alert("Verification link sent! Check your inbox.");
             } else {
                 result = await supabaseClient.auth.signInWithPassword({ email, password });
             }
@@ -253,18 +261,11 @@
 
         async function saveProfile() {
             const { data: { user } } = await supabaseClient.auth.getUser();
-            if(!user) return;
-
             const mcName = document.getElementById('mc-name').value;
+            const { error } = await supabaseClient.from('profiles').upsert({ id: user.id, username: mcName });
 
-            const { error } = await supabaseClient.from('profiles').upsert({
-                id: user.id,
-                username: mcName,
-                updated_at: new Date()
-            });
-
-            if (error) alert("Error saving profile: " + error.message);
-            else alert("Cloud Sync Complete!");
+            if (error) alert("Error: " + error.message);
+            else alert("Cloud Profile Updated!");
         }
 
         // --- VISUALS ---
@@ -279,6 +280,11 @@
                 "move": { "enable": true, "speed": 2 }
             }
         });
+
+        // Toggle help text on download click
+        document.getElementById('dl-btn').onclick = function() {
+            document.getElementById('dl-help').style.display = 'block';
+        };
 
         checkUser();
     </script>
