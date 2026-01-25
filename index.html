@@ -15,7 +15,7 @@
 
         body, html {
             margin: 0; padding: 0;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-dark);
             color: white;
             overflow-x: hidden;
@@ -65,7 +65,9 @@
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(157, 80, 187, 0.1);
             padding: 40px; border-radius: 25px; backdrop-filter: blur(5px);
+            transition: 0.3s ease;
         }
+        .card:hover { border-color: rgba(157, 80, 187, 0.4); }
 
         h1 { font-size: 70px; font-weight: 900; margin: 0; letter-spacing: -2px; }
         .purple-text { color: var(--primary-purple); }
@@ -82,9 +84,11 @@
         input {
             width: 100%; background: #08080c; border: 1px solid #1a1a2e;
             color: white; padding: 12px; margin: 10px 0 15px 0; border-radius: 10px; box-sizing: border-box;
+            outline: none; transition: 0.3s;
         }
+        input:focus { border-color: var(--primary-purple); }
         input:disabled { opacity: 0.4; cursor: not-allowed; }
-        label { font-size: 11px; color: #555; text-transform: uppercase; font-weight: bold; }
+        label { font-size: 11px; color: #777; text-transform: uppercase; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -104,7 +108,8 @@
         <center>
             <h1>CLODY<span class="purple-text">NESS</span></h1>
             <p style="color: #888; font-size: 20px;">The Next Generation of 1.8.8 Performance.</p>
-            <br><a href="#" class="btn">DOWNLOAD ALPHA</a>
+            <br>
+            <a href="https://github.com/Jackson01XD/ClodynessSite/releases/download/Nightly_Alpha/ClodynessLauncher_Setup.exe" class="btn">DOWNLOAD ALPHA</a>
         </center>
     </div>
 
@@ -112,7 +117,12 @@
         <h2 class="purple-text">Built-in Modules</h2>
         <div class="card">
             <h3>Optimized Motion Blur</h3>
-            <p style="color: #aaa;">Silky smooth motion blur that doesn't tank your FPS.</p>
+            <p style="color: #aaa;">Silky smooth motion blur that doesn't tank your FPS. Fully adjustable strength via the in-game HUD.</p>
+        </div>
+        <br>
+        <div class="card">
+            <h3>Custom Crosshair Editor</h3>
+            <p style="color: #aaa;">Draw your own crosshair pixel-by-pixel directly in the client menu.</p>
         </div>
     </div>
 
@@ -120,7 +130,7 @@
         <center>
             <div class="card">
                 <h2 class="purple-text">Cosmetics Store</h2>
-                <p>Bib the Shopkeeper is currently organizing the capes.</p>
+                <p>Bib the Shopkeeper is currently organizing the capes and wings. Check back soon!</p>
             </div>
         </center>
     </div>
@@ -131,7 +141,7 @@
                 <h2 class="purple-text" style="margin-top: 0;">Clod Account</h2>
 
                 <div id="logged-out-ui">
-                    <p style="color: #888; margin-bottom: 20px;">Sign in to sync your coins and skins.</p>
+                    <p style="color: #888; margin-bottom: 20px;">Sign in to sync your coins and skins across the Clodyness network.</p>
                     
                     <label>Email Address</label>
                     <input type="email" id="auth-email" placeholder="email@example.com">
@@ -196,17 +206,17 @@
                 loggedOutUI.style.display = 'none';
                 loggedInUI.style.display = 'block';
                 
-                // Fetch data from our custom 'profiles' table
-                const { data: profile } = await supabaseClient
+                // Fetch profile
+                const { data: profile, error } = await supabaseClient
                     .from('profiles')
                     .select('*')
                     .eq('id', user.id)
                     .single();
 
                 if (profile) {
-                    document.getElementById('user-greeting').innerText = `Logged in as ${profile.username || user.email}`;
+                    document.getElementById('user-greeting').innerText = `Welcome, ${profile.username || user.email}`;
                     document.getElementById('mc-name').value = profile.username || "";
-                    document.getElementById('coin-display').value = `${profile.coins} Coins 🪙`;
+                    document.getElementById('coin-display').value = `${profile.coins || 0} Coins 🪙`;
                 }
             } else {
                 loggedOutUI.style.display = 'block';
@@ -214,7 +224,6 @@
             }
         }
 
-        // Handle Email Login or Signup
         async function handleEmailAuth(type) {
             const email = document.getElementById('auth-email').value;
             const password = document.getElementById('auth-password').value;
@@ -224,7 +233,7 @@
             let result;
             if (type === 'signup') {
                 result = await supabaseClient.auth.signUp({ email, password });
-                if (!result.error) alert("Success! Please check your email for a verification link.");
+                if (!result.error) alert("Check your email for the confirmation link!");
             } else {
                 result = await supabaseClient.auth.signInWithPassword({ email, password });
             }
@@ -233,7 +242,6 @@
             else checkUser();
         }
 
-        // Discord OAuth
         document.getElementById('discord-login-btn').addEventListener('click', async () => {
             await supabaseClient.auth.signInWithOAuth({ provider: 'discord' });
         });
@@ -243,19 +251,20 @@
             window.location.reload();
         }
 
-        // Save Profile Data
         async function saveProfile() {
             const { data: { user } } = await supabaseClient.auth.getUser();
+            if(!user) return;
+
             const mcName = document.getElementById('mc-name').value;
 
-            // Upsert: Updates if exists, creates if not
             const { error } = await supabaseClient.from('profiles').upsert({
                 id: user.id,
-                username: mcName
+                username: mcName,
+                updated_at: new Date()
             });
 
             if (error) alert("Error saving profile: " + error.message);
-            else alert("Profile saved to Clodyness Cloud!");
+            else alert("Cloud Sync Complete!");
         }
 
         // --- VISUALS ---
@@ -271,7 +280,6 @@
             }
         });
 
-        // Initialize user check on load
         checkUser();
     </script>
 </body>
